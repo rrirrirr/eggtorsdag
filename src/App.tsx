@@ -174,7 +174,7 @@ const App: React.FC = () => {
 
   return (
     <div className="App">
-      <h1>Egg Painter</h1>
+      <h1>Eggtorsdag</h1>
       <div className="painter-container">
         <EggCanvas color={color} gridSize={20} />
         <div className="color-picker">
