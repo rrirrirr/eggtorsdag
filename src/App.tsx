@@ -111,6 +111,7 @@ const EggCanvas: React.FC<EggCanvasProps> = ({ color, gridSize }) => {
     );
 
     function onConnect() {
+      console.log("Connected");
       setIsConnected(true);
     }
 
@@ -131,7 +132,6 @@ const EggCanvas: React.FC<EggCanvasProps> = ({ color, gridSize }) => {
     }
 
     function onPaint(data: { x: number; y: number; color: string }) {
-      console.log("paint");
       handleIncomingPaint(data.x, data.y, data.color);
     }
 
@@ -145,9 +145,6 @@ const EggCanvas: React.FC<EggCanvasProps> = ({ color, gridSize }) => {
       newSocket.off("connect", onConnect);
       newSocket.off("disconnect", onDisconnect);
       newSocket.off("paint", onPaint);
-    };
-
-    return () => {
       newSocket.disconnect();
     };
   }, []);
