@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { SketchPicker, ColorResult } from "react-color";
 import chroma from "chroma-js";
 import "./App.css";
+import useSound from "use-sound";
 
 interface EggCanvasProps {
   color: string;
@@ -38,6 +39,10 @@ interface EggCanvasProps {
 }
 
 const EggCanvas: React.FC<EggCanvasProps> = ({ color, gridSize }) => {
+  const [playSound1] = useSound("/sounds/beep.mp3");
+  const [playSound2] = useSound("/sounds/pop.mp3");
+  const [playSound3] = useSound("/sounds/select.mp3");
+  const [playSound4] = useSound("/sounds/snap.mp3");
   const [grid, setGrid] = useState<boolean[][]>(() =>
     generateEggGrid(gridSize, gridSize)
   );
@@ -50,6 +55,14 @@ const EggCanvas: React.FC<EggCanvasProps> = ({ color, gridSize }) => {
   const handleCellClick = (x: number, y: number) => {
     if (!grid[y][x]) {
       return null;
+    }
+    const randomSound = Math.floor(Math.random() * 4);
+    if (randomSound === 0) {
+      playSound1();
+    } else if (randomSound === 1) {
+      playSound2();
+    } else {
+      playSound3();
     }
     setGrid((prevGrid) => {
       const newGrid = prevGrid.map((row) => row.slice());
