@@ -1,0 +1,15 @@
+.App {
+  text-align: center;
+}
+
+.painter-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.color-picker {
+  display: inline-block;
+}
