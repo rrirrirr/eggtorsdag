@@ -3,6 +3,7 @@ import { SketchPicker, ColorResult } from "react-color";
 import chroma from "chroma-js";
 import "./App.css";
 import useSound from "use-sound";
+import { io, Socket } from "socket.io-client";
 
 interface EggCanvasProps {
   color: string;
@@ -56,6 +57,7 @@ const EggCanvas: React.FC<EggCanvasProps> = ({ color, gridSize }) => {
     if (!grid[y][x]) {
       return null;
     }
+
     const randomSound = Math.floor(Math.random() * 4);
     if (randomSound === 0) {
       playSound1();
@@ -64,6 +66,11 @@ const EggCanvas: React.FC<EggCanvasProps> = ({ color, gridSize }) => {
     } else {
       playSound3();
     }
+    console.log(socket);
+    if (socket) {
+      socket.emit("paint", { x, y, color });
+    }
+
     setGrid((prevGrid) => {
       const newGrid = prevGrid.map((row) => row.slice());
       newGrid[y][x] = true;
@@ -84,9 +91,69 @@ const EggCanvas: React.FC<EggCanvasProps> = ({ color, gridSize }) => {
     paintRandomPattern();
   }, []);
 
+  const [socket, setSocket] = useState<Socket | null>(null);
+
+  const handleIncomingPaint = (x: number, y: number, newColor: string) => {
+    setColors((prevColors) => {
+      const updatedColors = prevColors.map((row) => row.slice());
+      updatedColors[y][x] = newColor;
+      return updatedColors;
+    });
+  };
+
+  const [isConnected, setIsConnected] = useState(false);
+  const [fooEvents, setFooEvents] = useState([]);
+
+  useEffect(() => {
+    const newSocket = io(
+      `${import.meta.env.VITE_HOST}:${import.meta.env.VITE_PORT}` ||
+        "http://localhost:3001"
+    );
+
+    function onConnect() {
+      setIsConnected(true);
+    }
+
+    function onInit(initialColors: string[][]) {
+      setColors((prevColors) => {
+        const updatedColors = prevColors.map((row, y) =>
+          row.map(
+            (cellColor, x) =>
+              (initialColors[y] && initialColors[y][x]) || cellColor
+          )
+        );
+        return updatedColors;
+      });
+    }
+
+    function onDisconnect() {
+      setIsConnected(false);
+    }
+
+    function onPaint(data: { x: number; y: number; color: string }) {
+      console.log("paint");
+      handleIncomingPaint(data.x, data.y, data.color);
+    }
+
+    setSocket(newSocket);
+    newSocket.on("connect", onConnect);
+    newSocket.on("init", onInit);
+    newSocket.on("disconnect", onDisconnect);
+    newSocket.on("paint", onPaint);
+
+    return () => {
+      newSocket.off("connect", onConnect);
+      newSocket.off("disconnect", onDisconnect);
+      newSocket.off("paint", onPaint);
+    };
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []);
+
   return (
     <>
-      <button onClick={paintRandomPattern}>Paint Random Pattern</button>
       <div
         style={{
           display: "grid",
@@ -174,7 +241,7 @@ const App: React.FC = () => {
 
   return (
     <div className="App">
-      <h1>Eggtorsdag</h1>
+      <h1>Multi Eggtorsdag</h1>
       <div className="painter-container">
         <EggCanvas color={color} gridSize={20} />
         <div className="color-picker">
