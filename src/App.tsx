@@ -66,7 +66,6 @@ const EggCanvas: React.FC<EggCanvasProps> = ({ color, gridSize }) => {
     } else {
       playSound3();
     }
-    console.log(socket);
     if (socket) {
       socket.emit("paint", { x, y, color });
     }
@@ -106,8 +105,7 @@ const EggCanvas: React.FC<EggCanvasProps> = ({ color, gridSize }) => {
 
   useEffect(() => {
     const newSocket = io(
-      `${import.meta.env.VITE_HOST}:${import.meta.env.VITE_PORT}` ||
-        "http://localhost:3001"
+      `${import.meta.env.VITE_HOST}` || "http://localhost:3001"
     );
 
     function onConnect() {
