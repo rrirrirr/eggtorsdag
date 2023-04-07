@@ -4,6 +4,34 @@ import chroma from "chroma-js";
 import "./App.css";
 import useSound from "use-sound";
 import { io, Socket } from "socket.io-client";
+import ColorGridPicker from "./components/ColorGridPicker";
+
+const generatePastelColors = (count: number): string[] => {
+  const colorStops = [
+    chroma("#FFB6C1"),
+    chroma("#FFDAB9"),
+    chroma("#E6E6FA"),
+    chroma("#B0E0E6"),
+    chroma("#F0E68C"),
+    chroma("#FFC0CB"),
+    chroma("#FFE4E1"),
+    chroma("#D8BFD8"),
+    chroma("#FFDEAD"),
+    chroma("#C6E2FF"),
+    chroma("#BFEFFF"),
+    chroma("#F0FFF0"),
+  ];
+  const colors: string[] = [];
+  const scale = chroma.scale(colorStops).mode("lch").colors(count);
+
+  for (const color of scale) {
+    colors.push(color);
+  }
+
+  return colors;
+};
+
+const pastelColors = generatePastelColors(100);
 
 interface EggCanvasProps {
   color: string;
@@ -239,9 +267,13 @@ const App: React.FC = () => {
       <h1>Multi Eggtorsdag</h1>
       <div className="painter-container">
         <EggCanvas color={color} gridSize={20} />
-        <div className="color-picker">
-          <SketchPicker color={color} onChangeComplete={handleColorChange} />
-        </div>
+      </div>
+      <div className="color-picker">
+        <ColorGridPicker
+          colors={pastelColors}
+          selectedColor={color}
+          onColorChange={setColor}
+        />
       </div>
     </div>
   );
