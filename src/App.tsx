@@ -91,10 +91,6 @@ const EggCanvas: React.FC<EggCanvasProps> = ({
       .map(() => Array(gridSize).fill(""))
   );
 
-  function handlePlayMelody() {
-    playEggMelody(colors, 1, 1000); // Adjust noteDuration and pauseBetweenNotes as needed
-  }
-
   const handleCellMouseEnter = (x: number, y: number) => {
     if (!grid[y][x]) {
       return null;
@@ -191,7 +187,7 @@ const EggCanvas: React.FC<EggCanvasProps> = ({
       newSocket.disconnect();
     };
   }, []);
-  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const audioContext = new window.AudioContext();
 
   function generateNewMelody(colors: string[][]) {
     const newEggMelody = new EggMelody(audioContext, 2);

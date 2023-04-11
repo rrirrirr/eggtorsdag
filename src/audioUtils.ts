@@ -54,7 +54,7 @@ export function calculateAverageFrequencyAndGain(colors: string[][]) {
 }
 
 export const playDrone = (frequency: number, gain: number): OscillatorNode => {
-  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const audioContext = new window.AudioContext();
   const oscillator = audioContext.createOscillator();
   const gainNode = audioContext.createGain();
 
@@ -75,7 +75,7 @@ export const stopDrone = (oscillator: OscillatorNode) => {
 };
 
 export function playSound(frequency: number, gain: number, duration: number) {
-  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const audioContext = new window.AudioContext();
   const oscillator = audioContext.createOscillator();
   const gainNode = audioContext.createGain();
 

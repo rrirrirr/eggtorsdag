@@ -1,4 +1,4 @@
-const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+const audioContext = new window.AudioContext();
 
 export const playSound = (frequency: number, duration = 0.5) => {
   const oscillator = audioContext.createOscillator();
