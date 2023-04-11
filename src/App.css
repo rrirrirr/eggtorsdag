@@ -13,3 +13,8 @@
 .color-picker {
   display: inline-block;
 }
+
+.cell:hover {
+  transform: scale(1.5);
+  z-index: 1;
+}

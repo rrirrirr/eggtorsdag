@@ -5,6 +5,15 @@ import "./App.css";
 import useSound from "use-sound";
 import { io, Socket } from "socket.io-client";
 import ColorGridPicker from "./components/ColorGridPicker";
+import { playSound } from "./Synth";
+import { playDrone, stopDrone } from "./audioUtils";
+import { playEggMelody } from "./audioUtils";
+import { EggMelody } from "./EggMelody";
+import {
+  calculateFrequencyAndGain,
+  calculateAverageFrequencyAndGain,
+} from "./audioUtils";
+import { getMostPrevalentColor } from "./colorUtils";
 
 const generatePastelColors = (count: number): string[] => {
   const colorStops = [
@@ -65,13 +74,14 @@ const generateEggGrid = (width: number, height: number): boolean[][] => {
 interface EggCanvasProps {
   color: string;
   gridSize: number;
+  audioStarted: boolean;
 }
 
-const EggCanvas: React.FC<EggCanvasProps> = ({ color, gridSize }) => {
-  const [playSound1] = useSound("/sounds/beep.mp3");
-  const [playSound2] = useSound("/sounds/pop.mp3");
-  const [playSound3] = useSound("/sounds/select.mp3");
-  const [playSound4] = useSound("/sounds/snap.mp3");
+const EggCanvas: React.FC<EggCanvasProps> = ({
+  color,
+  gridSize,
+  audioStarted,
+}) => {
   const [grid, setGrid] = useState<boolean[][]>(() =>
     generateEggGrid(gridSize, gridSize)
   );
@@ -81,19 +91,24 @@ const EggCanvas: React.FC<EggCanvasProps> = ({ color, gridSize }) => {
       .map(() => Array(gridSize).fill(""))
   );
 
+  function handlePlayMelody() {
+    playEggMelody(colors, 1, 1000); // Adjust noteDuration and pauseBetweenNotes as needed
+  }
+
+  const handleCellMouseEnter = (x: number, y: number) => {
+    if (!grid[y][x]) {
+      return null;
+    }
+
+    const frequency = chroma(colors[y][x]).get("hsl.h") * 4 + 100;
+    playSound(frequency);
+  };
+
   const handleCellClick = (x: number, y: number) => {
     if (!grid[y][x]) {
       return null;
     }
 
-    const randomSound = Math.floor(Math.random() * 4);
-    if (randomSound === 0) {
-      playSound1();
-    } else if (randomSound === 1) {
-      playSound2();
-    } else {
-      playSound3();
-    }
     if (socket) {
       socket.emit("paint", { x, y, color });
     }
@@ -117,6 +132,8 @@ const EggCanvas: React.FC<EggCanvasProps> = ({ color, gridSize }) => {
   useEffect(() => {
     paintRandomPattern();
   }, []);
+
+  const [eggMelody, setEggMelody] = useState<EggMelody | null>(null);
 
   const [socket, setSocket] = useState<Socket | null>(null);
 
@@ -174,6 +191,52 @@ const EggCanvas: React.FC<EggCanvasProps> = ({ color, gridSize }) => {
       newSocket.disconnect();
     };
   }, []);
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+  function generateNewMelody(colors: string[][]) {
+    const newEggMelody = new EggMelody(audioContext, 2);
+    colors.forEach((colorRow) => {
+      const validColors = colorRow.filter((color) => color !== "transparent");
+
+      if (validColors.length > 0) {
+        const { frequency, gain } = calculateAverageFrequencyAndGain([
+          validColors,
+        ]);
+        newEggMelody.addTone(frequency, gain);
+      }
+    });
+
+    return newEggMelody;
+  }
+
+  useEffect(() => {
+    if (audioStarted) {
+      if (!eggMelody) {
+        const newEggMelody = generateNewMelody(colors);
+        setEggMelody(newEggMelody);
+        newEggMelody.play();
+      } else {
+        const newFrequencies: number[] = [];
+        const newGains: number[] = [];
+
+        colors.forEach((colorRow) => {
+          const prevalentColor = getMostPrevalentColor(colorRow);
+          if (prevalentColor) {
+            const { frequency, gain } =
+              calculateFrequencyAndGain(prevalentColor);
+            newFrequencies.push(frequency);
+            newGains.push(gain);
+          }
+        });
+
+        eggMelody.setMelody(newFrequencies, newGains);
+      }
+
+      return () => {
+        // newEggMelody.stop();
+      };
+    }
+  }, [colors, audioStarted]);
 
   return (
     <>
@@ -185,7 +248,7 @@ const EggCanvas: React.FC<EggCanvasProps> = ({ color, gridSize }) => {
           gap: "1px",
           width: "400px",
           height: "400px",
-          background: "#E4E8E6",
+          background: "#45475a",
         }}
       >
         {grid.map((row, y) =>
@@ -193,6 +256,8 @@ const EggCanvas: React.FC<EggCanvasProps> = ({ color, gridSize }) => {
             <div
               key={`${x}-${y}`}
               onClick={() => handleCellClick(x, y)}
+              onMouseEnter={() => handleCellMouseEnter(x, y)}
+              className="cell"
               style={{
                 backgroundColor: cell ? colors[y][x] : "transparent",
                 width: "100%",
@@ -256,17 +321,26 @@ const generateRandomPatternOld = (
 };
 
 const App: React.FC = () => {
-  const [color, setColor] = useState("#000000");
+  const [color, setColor] = useState("#1e1e2e");
 
   const handleColorChange = (newColor: ColorResult) => {
     setColor(newColor.hex);
   };
 
+  const [audioStarted, setAudioStarted] = useState(false);
+
+  const handleAudioStart = () => {
+    if (!audioStarted) {
+      setAudioStarted(true);
+    }
+  };
+
   return (
-    <div className="App">
-      <h1>Multi Eggtorsdag</h1>
+    <div className="App" style={{ backgroundColor: "#1e1e2e" }}>
+      <h1 style={{ color: "#fab387" }}>Multi Eggtorsdag</h1>
+      <button onClick={handleAudioStart}>Party</button>
       <div className="painter-container">
-        <EggCanvas color={color} gridSize={20} />
+        <EggCanvas color={color} gridSize={20} audioStarted={audioStarted} />
       </div>
       <div className="color-picker">
         <ColorGridPicker

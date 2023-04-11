@@ -1,4 +1,7 @@
+import chroma from "chroma-js";
 import React from "react";
+import { playSound } from "../Synth";
+import "./ColorGridPicker.css";
 
 interface ColorGridPickerProps {
   colors: string[];
@@ -11,35 +14,26 @@ const ColorGridPicker: React.FC<ColorGridPickerProps> = ({
   selectedColor,
   onColorChange,
 }) => {
+  const handleCellMouseEnter = (color: string) => {
+    const frequency = chroma(color).get("hsl.h") * 4 + 100;
+    playSound(frequency);
+  };
+
   return (
-    <div className="color-grid-picker">
-      {colors.map((color, index) => (
-        <div
-          key={index}
-          className={`color-grid-picker__item${
-            selectedColor === color ? " color-grid-picker__item--selected" : ""
-          }`}
-          style={{ backgroundColor: color }}
-          onClick={() => onColorChange(color)}
-        />
-      ))}
-      <style jsx>{`
-        .color-grid-picker {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 4px;
-        }
-        .color-grid-picker__item {
-          width: 32px;
-          height: 32px;
-          border-radius: 4px;
-          cursor: pointer;
-        }
-        .color-grid-picker__item--selected {
-          border: 2px solid #000;
-          box-sizing: border-box;
-        }
-      `}</style>
+    <div className="color-grid-container">
+      <div className="color-grid">
+        {colors.map((color, index) => (
+          <div
+            key={index}
+            className={`color-box ${
+              color === selectedColor ? "selected-color" : ""
+            }`}
+            style={{ backgroundColor: color }}
+            onMouseEnter={() => handleCellMouseEnter(color)}
+            onClick={() => onColorChange(color)}
+          />
+        ))}
+      </div>
     </div>
   );
 };
